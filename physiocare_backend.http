@@ -1,0 +1,6 @@
+@physiocare_backend_HostAddress = http://localhost:5298
+
+GET {{physiocare_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

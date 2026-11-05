@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using physiocare_backend.Data;
 
 #nullable disable
@@ -12,8 +12,8 @@ using physiocare_backend.Data;
 namespace physiocare_backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260519201411_MigracionInicialProyecto")]
-    partial class MigracionInicialProyecto
+    [Migration("20261105211348_InitialPostgres")]
+    partial class InitialPostgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,25 +21,25 @@ namespace physiocare_backend.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.25")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("physiocare_backend.Models.CategoriaTerapia", b =>
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<int>("EspecialidadId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("nombre")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("character varying(150)");
 
                     b.HasKey("id");
 
@@ -102,33 +102,33 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<int>("EstadoCitaId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("PacienteId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("ServicioTerapiaId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TerapeutaId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("duracionEstimada")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("fecha")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<TimeSpan>("horaInicio")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<string>("notas")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("id");
 
@@ -147,14 +147,14 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<string>("nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("id");
 
@@ -182,13 +182,13 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<string>("nombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("id");
 
@@ -226,14 +226,14 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<string>("nombre")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.HasKey("id");
 
@@ -271,14 +271,14 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<string>("nombre")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("character varying(10)");
 
                     b.HasKey("id");
 
@@ -306,50 +306,50 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<int>("EstadoCivilId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("GeneroId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TipoDocumentoId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TipoSangreId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("correoElectronico")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("direccionResidencia")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("fechaNacimiento")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<long>("numeroDocumento")
                         .HasColumnType("bigint");
 
                     b.Property<string>("primerApellido")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("primerNombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("resumenClinico")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("segundoApellido")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("segundoNombre")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<long>("telefono")
                         .HasColumnType("bigint");
@@ -371,27 +371,43 @@ namespace physiocare_backend.Migrations
                         .IsUnique();
 
                     b.ToTable("Pacientes");
+
+                    b.HasData(
+                        new
+                        {
+                            id = 1,
+                            EstadoCivilId = 1,
+                            GeneroId = 1,
+                            TipoDocumentoId = 1,
+                            TipoSangreId = 1,
+                            correoElectronico = "paciente1@physiocare.com",
+                            fechaNacimiento = new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            numeroDocumento = 1000000001L,
+                            primerApellido = "Inicial",
+                            primerNombre = "Paciente",
+                            telefono = 3000000000L
+                        });
                 });
 
             modelBuilder.Entity("physiocare_backend.Models.ServicioTerapia", b =>
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<int>("CategoriaTerapiaId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("descripcion")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("nombreServicio")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("id");
 
@@ -400,57 +416,104 @@ namespace physiocare_backend.Migrations
                     b.ToTable("Terapias");
                 });
 
+            modelBuilder.Entity("physiocare_backend.Models.SesionTerapia", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
+
+                    b.Property<int>("CitaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PacienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TerapeutaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("estado")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("evolucion")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("fechaSesion")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("observaciones")
+                        .HasColumnType("text");
+
+                    b.Property<string>("recomendaciones")
+                        .HasColumnType("text");
+
+                    b.Property<string>("tratamientoRealizado")
+                        .HasColumnType("text");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("CitaId");
+
+                    b.HasIndex("PacienteId");
+
+                    b.HasIndex("TerapeutaId");
+
+                    b.ToTable("SesionesTerapia");
+                });
+
             modelBuilder.Entity("physiocare_backend.Models.Terapeuta", b =>
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<int>("EspecialidadTerapeutaId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TipoDocumentoId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("correoLaboral")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("diasLaborales")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("fechaNacimiento")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<TimeSpan>("horaFin")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<TimeSpan>("horaInicio")
-                        .HasColumnType("time");
+                        .HasColumnType("interval");
 
                     b.Property<long>("numeroDocumento")
                         .HasColumnType("bigint");
 
                     b.Property<string>("primerApellido")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("primerNombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("segundoApellido")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("segundoNombre")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("tarjetaProfesional")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<long>("telefonoContacto")
                         .HasColumnType("bigint");
@@ -465,20 +528,38 @@ namespace physiocare_backend.Migrations
                         .IsUnique();
 
                     b.ToTable("Terapeutas");
+
+                    b.HasData(
+                        new
+                        {
+                            id = 1,
+                            EspecialidadTerapeutaId = 1,
+                            TipoDocumentoId = 1,
+                            correoLaboral = "terapeuta1@physiocare.com",
+                            diasLaborales = "Lunes a Viernes",
+                            fechaNacimiento = new DateTime(1985, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            horaFin = new TimeSpan(0, 17, 0, 0, 0),
+                            horaInicio = new TimeSpan(0, 8, 0, 0, 0),
+                            numeroDocumento = 2000000002L,
+                            primerApellido = "Inicial",
+                            primerNombre = "Terapeuta",
+                            tarjetaProfesional = "TP-12345",
+                            telefonoContacto = 3000000001L
+                        });
                 });
 
             modelBuilder.Entity("physiocare_backend.Models.TipoDocumento", b =>
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<string>("nombre")
                         .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("character varying(30)");
 
                     b.HasKey("id");
 
@@ -511,14 +592,14 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
 
                     b.Property<string>("nombre")
                         .IsRequired()
                         .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                        .HasColumnType("character varying(3)");
 
                     b.HasKey("id");
 
@@ -571,20 +652,36 @@ namespace physiocare_backend.Migrations
                 {
                     b.Property<int>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("id"));
+
+                    b.Property<int?>("PacienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TerapeutaId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("activo")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("passwordHash")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
+
+                    b.Property<string>("rol")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("username")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("text");
 
                     b.HasKey("id");
+
+                    b.HasIndex("PacienteId");
+
+                    b.HasIndex("TerapeutaId");
 
                     b.ToTable("Usuarios");
 
@@ -592,8 +689,36 @@ namespace physiocare_backend.Migrations
                         new
                         {
                             id = 1,
-                            passwordHash = "$2a$12$ZpYbeSWhvLg7l6Z5GskqXOnlPCOvF80ZJc9bVvF0XN6h3u6bBfTpq",
+                            activo = true,
+                            passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
+                            rol = "Administrador",
                             username = "Admin"
+                        },
+                        new
+                        {
+                            id = 2,
+                            activo = true,
+                            passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
+                            rol = "Recepcionista",
+                            username = "recepcion"
+                        },
+                        new
+                        {
+                            id = 3,
+                            TerapeutaId = 1,
+                            activo = true,
+                            passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
+                            rol = "Terapeuta",
+                            username = "terapeuta1"
+                        },
+                        new
+                        {
+                            id = 4,
+                            PacienteId = 1,
+                            activo = true,
+                            passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
+                            rol = "Paciente",
+                            username = "paciente1"
                         });
                 });
 
@@ -689,6 +814,33 @@ namespace physiocare_backend.Migrations
                     b.Navigation("CategoriaTerapia");
                 });
 
+            modelBuilder.Entity("physiocare_backend.Models.SesionTerapia", b =>
+                {
+                    b.HasOne("physiocare_backend.Models.Cita", "Cita")
+                        .WithMany()
+                        .HasForeignKey("CitaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("physiocare_backend.Models.Paciente", "Paciente")
+                        .WithMany()
+                        .HasForeignKey("PacienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("physiocare_backend.Models.Terapeuta", "Terapeuta")
+                        .WithMany()
+                        .HasForeignKey("TerapeutaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cita");
+
+                    b.Navigation("Paciente");
+
+                    b.Navigation("Terapeuta");
+                });
+
             modelBuilder.Entity("physiocare_backend.Models.Terapeuta", b =>
                 {
                     b.HasOne("physiocare_backend.Models.EspecialidadTerapeuta", "EspecialidadTerapeuta")
@@ -706,6 +858,23 @@ namespace physiocare_backend.Migrations
                     b.Navigation("EspecialidadTerapeuta");
 
                     b.Navigation("TipoDocumento");
+                });
+
+            modelBuilder.Entity("physiocare_backend.Models.Usuario", b =>
+                {
+                    b.HasOne("physiocare_backend.Models.Paciente", "Paciente")
+                        .WithMany()
+                        .HasForeignKey("PacienteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("physiocare_backend.Models.Terapeuta", "Terapeuta")
+                        .WithMany()
+                        .HasForeignKey("TerapeutaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Paciente");
+
+                    b.Navigation("Terapeuta");
                 });
 #pragma warning restore 612, 618
         }

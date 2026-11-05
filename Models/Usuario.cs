@@ -1,17 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Text.Json.Serialization;
 
 namespace physiocare_backend.Models
 {
     public class Usuario
     {
-        [Key]
         public int id { get; set; }
+        public string username { get; set; } = null!;
+        public string passwordHash { get; set; } = null!;
+        public string rol { get; set; } = "Paciente"; // Administrador, Recepcionista, Terapeuta, Paciente
+        public bool activo { get; set; } = true;
 
-        [Required]
-        [StringLength(50)]
-        public string username { get; set; }
+        // Relaciones opcionales (Para vincular cuentas con entidades físicas)
+        public int? PacienteId { get; set; }
+        [JsonIgnore]
+        public Paciente? Paciente { get; set; }
 
-        [Required]
-        public string passwordHash { get; set; }
+        public int? TerapeutaId { get; set; }
+        [JsonIgnore]
+        public Terapeuta? Terapeuta { get; set; }
     }
 }

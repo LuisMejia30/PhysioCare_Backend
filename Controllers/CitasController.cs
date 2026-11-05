@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,7 @@ namespace physiocare_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Exige estar autenticado mediante Token JWT para cualquier endpoint
     public class CitasController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -22,22 +25,55 @@ namespace physiocare_backend.Controllers
         }
 
         // GET: api/Citas
-        // Ahora incluye la información relacionada para ver nombres en lugar de solo IDs
+        // Retorna las citas según el rol del usuario autenticado
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cita>>> GetCitas()
         {
-            return await _context.Citas
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var query = _context.Citas
                 .Include(c => c.Paciente)
                 .Include(c => c.Terapeuta)
                 .Include(c => c.ServicioTerapia)
                 .Include(c => c.EstadoCita)
-                .ToListAsync();
+                .AsQueryable();
+
+            // Filtrado por Rol
+            if (userRole == "Paciente")
+            {
+                var pacienteIdClaim = User.FindFirst("PacienteId")?.Value;
+                if (int.TryParse(pacienteIdClaim, out int pacienteId))
+                {
+                    query = query.Where(c => c.PacienteId == pacienteId);
+                }
+                else
+                {
+                    return Ok(new List<Cita>()); // Si no hay PacienteId vinculado en el token
+                }
+            }
+            else if (userRole == "Terapeuta")
+            {
+                var terapeutaIdClaim = User.FindFirst("TerapeutaId")?.Value;
+                if (int.TryParse(terapeutaIdClaim, out int terapeutaId))
+                {
+                    query = query.Where(c => c.TerapeutaId == terapeutaId);
+                }
+                else
+                {
+                    return Ok(new List<Cita>()); // Si no hay TerapeutaId vinculado en el token
+                }
+            }
+            // "Administrador" y "Recepcionista" continúan sin filtro para obtener todas las citas
+
+            return await query.ToListAsync();
         }
 
         // GET: api/Citas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Cita>> GetCita(int id)
         {
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
             var cita = await _context.Citas
                 .Include(c => c.Paciente)
                 .Include(c => c.Terapeuta)
@@ -50,11 +86,30 @@ namespace physiocare_backend.Controllers
                 return NotFound();
             }
 
+            // Validar que un Paciente o Terapeuta solo acceda a sus propias citas
+            if (userRole == "Paciente")
+            {
+                var pacienteIdClaim = User.FindFirst("PacienteId")?.Value;
+                if (!int.TryParse(pacienteIdClaim, out int pacienteId) || cita.PacienteId != pacienteId)
+                {
+                    return Forbid();
+                }
+            }
+            else if (userRole == "Terapeuta")
+            {
+                var terapeutaIdClaim = User.FindFirst("TerapeutaId")?.Value;
+                if (!int.TryParse(terapeutaIdClaim, out int terapeutaId) || cita.TerapeutaId != terapeutaId)
+                {
+                    return Forbid();
+                }
+            }
+
             return cita;
         }
 
         // PUT: api/Citas/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador,Recepcionista,Terapeuta")] // Modificación restringida a roles de gestión
         public async Task<IActionResult> PutCita(int id, Cita cita)
         {
             if (id != cita.id)
@@ -85,11 +140,27 @@ namespace physiocare_backend.Controllers
 
         // POST: api/Citas
         [HttpPost]
+        [Authorize(Roles = "Administrador,Recepcionista,Paciente")] // Pacientes, Recepcionistas y Admins pueden crear citas
         public async Task<ActionResult<Cita>> PostCita(Cita cita)
         {
             // Validar que el servicio realmente existe
             var servicio = await _context.Terapias.FindAsync(cita.ServicioTerapiaId);
             if (servicio == null) return BadRequest("El servicio seleccionado no existe.");
+
+            // Si el rol es Paciente, forzar que la cita creada pertenezca a su propio PacienteId
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole == "Paciente")
+            {
+                var pacienteIdClaim = User.FindFirst("PacienteId")?.Value;
+                if (int.TryParse(pacienteIdClaim, out int pacienteId))
+                {
+                    cita.PacienteId = pacienteId;
+                }
+                else
+                {
+                    return BadRequest("Su usuario no está vinculado a un perfil de paciente válido.");
+                }
+            }
 
             _context.Citas.Add(cita);
             await _context.SaveChangesAsync();
@@ -99,6 +170,7 @@ namespace physiocare_backend.Controllers
 
         // DELETE: api/Citas/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador,Recepcionista")] // Solo Administradores y Recepcionistas pueden cancelar/eliminar físicamente
         public async Task<IActionResult> DeleteCita(int id)
         {
             var cita = await _context.Citas.FindAsync(id);

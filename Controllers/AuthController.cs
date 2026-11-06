@@ -35,13 +35,13 @@ namespace physiocare_backend.Controllers
                 return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
             }
 
-            // NUEVO: Verificar si la cuenta está activa
+            // Verificar si la cuenta está activa
             if (!usuario.activo)
             {
                 return Unauthorized(new { message = "El usuario está inactivo. Contacte al administrador." });
             }
 
-            // 2. Verificar si la contraseña limpia coincide con el Hash de la BD
+            // 2. Verificar la contraseña con BCrypt
             bool passwordValido = BCryptNet.Verify(loginDto.password, usuario.passwordHash);
 
             if (!passwordValido)
@@ -52,7 +52,7 @@ namespace physiocare_backend.Controllers
             // 3. Generar JWT Token
             var token = GenerarJwtToken(usuario);
 
-            // 4. Login exitoso
+            // 4. Respuesta de éxito
             return Ok(new
             {
                 success = true,
@@ -69,73 +69,45 @@ namespace physiocare_backend.Controllers
             });
         }
 
-        // ENDPOINT TEMPORAL PARA PRUEBAS EN SWAGGER (Borrar en producción)
-        [HttpGet("test-tokens")]
-        public async Task<IActionResult> GetTestTokens()
+        private string GenerarJwtToken(Usuario usuario)
         {
-            // Buscamos a los usuarios de prueba que creamos en la base de datos
-            var usuarios = await _context.Usuarios.ToListAsync();
+            var jwtSettings = _config.GetSection("Jwt");
+            var keyString = jwtSettings["Key"] ?? "PhysioCare_Super_Secret_Key_2026_Minimum_32_Bytes_Long!";
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             
-            if (!usuarios.Any())
-                return NotFound("No hay usuarios en la base de datos. ¿Ejecutaste las migraciones?");
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            var tokensGenerados = new List<object>();
-
-            foreach (var usuario in usuarios)
+            var claims = new List<Claim>
             {
-                var token = GenerarJwtToken(usuario);
-                tokensGenerados.Add(new 
-                { 
-                    Rol = usuario.rol, 
-                    Usuario = usuario.username, 
-                    TokenParaCopiar = $"Bearer {token}" // Ya viene con la palabra Bearer y el espacio
-                });
+                new Claim(ClaimTypes.NameIdentifier, usuario.id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.username),
+                new Claim(ClaimTypes.Role, usuario.rol ?? "Paciente")
+            };
+
+            if (usuario.PacienteId.HasValue && usuario.PacienteId.Value > 0)
+            {
+                claims.Add(new Claim("PacienteId", usuario.PacienteId.Value.ToString()));
             }
 
-            return Ok(tokensGenerados);
-        }
+            if (usuario.TerapeutaId.HasValue && usuario.TerapeutaId.Value > 0)
+            {
+                claims.Add(new Claim("TerapeutaId", usuario.TerapeutaId.Value.ToString()));
+            }
 
-        private string GenerarJwtToken(Usuario usuario)
-{
-    var jwtSettings = _config.GetSection("Jwt");
-    var keyString = jwtSettings["Key"] ?? "PhysioCare_Super_Secret_Key_2026_Minimum_32_Bytes_Long!";
-    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-    
-    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            double expireDays = 1;
+            if (double.TryParse(jwtSettings["ExpireDays"], out double configuredDays))
+            {
+                expireDays = configuredDays;
+            }
 
-    // Definición explícita de claims
-    var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, usuario.id.ToString()),
-        new Claim(ClaimTypes.Name, usuario.username),
-        new Claim(ClaimTypes.Role, usuario.rol ?? "Paciente")
-    };
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(expireDays),
+                signingCredentials: credentials);
 
-    // Mapeo seguro de llaves foráneas
-    if (usuario.PacienteId.HasValue && usuario.PacienteId.Value > 0)
-    {
-        claims.Add(new Claim("PacienteId", usuario.PacienteId.Value.ToString()));
-    }
-
-    if (usuario.TerapeutaId.HasValue && usuario.TerapeutaId.Value > 0)
-    {
-        claims.Add(new Claim("TerapeutaId", usuario.TerapeutaId.Value.ToString()));
-    }
-
-    double expireDays = 1;
-    if (double.TryParse(jwtSettings["ExpireDays"], out double configuredDays))
-    {
-        expireDays = configuredDays;
-    }
-
-    var token = new JwtSecurityToken(
-        issuer: jwtSettings["Issuer"],
-        audience: jwtSettings["Audience"],
-        claims: claims,
-        expires: DateTime.Now.AddDays(expireDays),
-        signingCredentials: credentials);
-
-    return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

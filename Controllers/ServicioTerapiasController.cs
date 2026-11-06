@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -43,8 +44,8 @@ namespace physiocare_backend.Controllers
         }
 
         // PUT: api/ServicioTerapias/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PutServicioTerapia(int id, ServicioTerapia servicioTerapia)
         {
             if (id != servicioTerapia.id)
@@ -74,8 +75,8 @@ namespace physiocare_backend.Controllers
         }
 
         // POST: api/ServicioTerapias
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<ServicioTerapia>> PostServicioTerapia(ServicioTerapia servicioTerapia)
         {
             _context.Terapias.Add(servicioTerapia);
@@ -86,6 +87,7 @@ namespace physiocare_backend.Controllers
 
         // DELETE: api/ServicioTerapias/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteServicioTerapia(int id)
         {
             var servicioTerapia = await _context.Terapias.FindAsync(id);

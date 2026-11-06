@@ -40,7 +40,7 @@ namespace physiocare_backend
                     };
                 });
 
-            // 3. Configurar política de CORS flexible para React y clientes locales
+            // 3. Configurar política de CORS flexible para el Frontend (Vercel / Localhost)
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowReactApp", policy =>
@@ -84,14 +84,16 @@ namespace physiocare_backend
 
             var app = builder.Build();
 
-            // 5. Aplicar Middleware de CORS PRIMERO en el pipeline
+            // 5. Middleware de CORS al inicio de la tubería HTTP (evita bloqueos 401/CORS en React)
             app.UseCors("AllowReactApp");
 
-            if (app.Environment.IsDevelopment())
+            // 6. Habilitar Swagger tanto en desarrollo como en producción para pruebas remotas
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "PhysioCare API v1");
+                c.RoutePrefix = "swagger";
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ namespace physiocare_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Exige estar autenticado mediante Token JWT
     public class TerapeutasController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -32,7 +34,6 @@ namespace physiocare_backend.Controllers
         }
 
         // GET: api/Terapeutas/buscar/90807060
-        // ESTE ES EL MÉTODO QUE USA EL FRONTEND PARA LAS CITAS
         [HttpGet("buscar/{numeroDocumento}")]
         public async Task<ActionResult<Terapeuta>> GetTerapeuta(long numeroDocumento)
         {
@@ -66,6 +67,7 @@ namespace physiocare_backend.Controllers
 
         // PUT: api/Terapeutas/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PutTerapeuta(int id, Terapeuta terapeuta)
         {
             if (id != terapeuta.id) return BadRequest();
@@ -87,6 +89,7 @@ namespace physiocare_backend.Controllers
 
         // POST: api/Terapeutas
         [HttpPost]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Terapeuta>> PostTerapeuta(Terapeuta terapeuta)
         {
             _context.Terapeutas.Add(terapeuta);
@@ -97,6 +100,7 @@ namespace physiocare_backend.Controllers
 
         // DELETE: api/Terapeutas/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteTerapeuta(int id)
         {
             var terapeuta = await _context.Terapeutas.FindAsync(id);

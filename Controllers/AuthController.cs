@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using physiocare_backend.Data;
 using physiocare_backend.Models;
+using BCryptNet = BCrypt.Net.BCrypt;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace physiocare_backend.Controllers
 {
@@ -15,18 +15,17 @@ namespace physiocare_backend.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _config;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(ApplicationDbContext context, IConfiguration config)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
-            _config = config;
+            _configuration = configuration;
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            // 1. Buscar si el usuario existe
             var usuario = await _context.Usuarios
                 .FirstOrDefaultAsync(u => u.username == loginDto.username);
 
@@ -35,13 +34,6 @@ namespace physiocare_backend.Controllers
                 return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
             }
 
-            // Verificar si la cuenta está activa
-            if (!usuario.activo)
-            {
-                return Unauthorized(new { message = "El usuario está inactivo. Contacte al administrador." });
-            }
-
-            // 2. Verificar la contraseña con BCrypt
             bool passwordValido = BCryptNet.Verify(loginDto.password, usuario.passwordHash);
 
             if (!passwordValido)
@@ -49,63 +41,35 @@ namespace physiocare_backend.Controllers
                 return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
             }
 
-            // 3. Generar JWT Token
-            var token = GenerarJwtToken(usuario);
+            var token = GenerateJwtToken(usuario.username);
 
-            // 4. Respuesta de éxito
             return Ok(new
             {
                 success = true,
                 message = "Bienvenido al sistema",
-                token = token,
-                user = new 
-                {
-                    id = usuario.id,
-                    username = usuario.username,
-                    rol = usuario.rol,
-                    pacienteId = usuario.PacienteId,
-                    terapeutaId = usuario.TerapeutaId
-                }
+                username = usuario.username,
+                token
             });
         }
 
-        private string GenerarJwtToken(Usuario usuario)
+        private string GenerateJwtToken(string username)
         {
-            var jwtSettings = _config.GetSection("Jwt");
-            var keyString = jwtSettings["Key"] ?? "PhysioCare_Super_Secret_Key_2026_Minimum_32_Bytes_Long!";
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-            
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
+            var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, usuario.id.ToString()),
-                new Claim(ClaimTypes.Name, usuario.username),
-                new Claim(ClaimTypes.Role, usuario.rol ?? "Paciente")
+                new Claim(ClaimTypes.Name, username)
             };
 
-            if (usuario.PacienteId.HasValue && usuario.PacienteId.Value > 0)
-            {
-                claims.Add(new Claim("PacienteId", usuario.PacienteId.Value.ToString()));
-            }
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "MiClaveSuperSecretaPhysioCare123!"));
 
-            if (usuario.TerapeutaId.HasValue && usuario.TerapeutaId.Value > 0)
-            {
-                claims.Add(new Claim("TerapeutaId", usuario.TerapeutaId.Value.ToString()));
-            }
-
-            double expireDays = 1;
-            if (double.TryParse(jwtSettings["ExpireDays"], out double configuredDays))
-            {
-                expireDays = configuredDays;
-            }
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
+                issuer: _configuration["Jwt:Issuer"] ?? "PhysioCare",
+                audience: _configuration["Jwt:Audience"] ?? "PhysioCareUsers",
                 claims: claims,
-                expires: DateTime.Now.AddDays(expireDays),
-                signingCredentials: credentials);
+                expires: DateTime.Now.AddHours(8),
+                signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

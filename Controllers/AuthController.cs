@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using physiocare_backend.Data;
 using physiocare_backend.Models;
@@ -91,7 +91,11 @@ namespace physiocare_backend.Controllers
                 new Claim("id", usuario.id.ToString())
             };
 
-            var keyString = _configuration["Jwt:Key"];
+            var keyString = _configuration["Jwt:Key"]
+                         ?? _configuration["Jwt__Key"]
+                         ?? Environment.GetEnvironmentVariable("Jwt__Key")
+                         ?? Environment.GetEnvironmentVariable("Jwt:Key");
+
             if (string.IsNullOrWhiteSpace(keyString) || keyString.Length < 32)
             {
                 keyString = "PhysioCare_Super_Secret_Key_2026_Minimum_32_Bytes_Long!";
@@ -100,11 +104,17 @@ namespace physiocare_backend.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var issuer = _configuration["Jwt:Issuer"];
-            if (string.IsNullOrWhiteSpace(issuer)) issuer = "PhysioCare";
+            var issuer = _configuration["Jwt:Issuer"]
+                      ?? _configuration["Jwt__Issuer"]
+                      ?? Environment.GetEnvironmentVariable("Jwt__Issuer")
+                      ?? Environment.GetEnvironmentVariable("Jwt:Issuer")
+                      ?? "PhysioCare";
 
-            var audience = _configuration["Jwt:Audience"];
-            if (string.IsNullOrWhiteSpace(audience)) audience = "PhysioCareUsers";
+            var audience = _configuration["Jwt:Audience"]
+                        ?? _configuration["Jwt__Audience"]
+                        ?? Environment.GetEnvironmentVariable("Jwt__Audience")
+                        ?? Environment.GetEnvironmentVariable("Jwt:Audience")
+                        ?? "PhysioCareUsers";
 
             var token = new JwtSecurityToken(
                 issuer: issuer,

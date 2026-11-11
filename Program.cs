@@ -18,18 +18,31 @@ namespace physiocare_backend
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // CAMBIO: Política estricta de CORS apuntando directamente a tu dominio de Vercel
+            // Configuración de CORS para Vercel y desarrollo local
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowVercel",
-                    policy => policy.WithOrigins("https://physiocare-frontend-chi.vercel.app")
+                    policy => policy.WithOrigins(
+                                        "https://physiocare-frontend-chi.vercel.app",
+                                        "http://localhost:5173",
+                                        "http://localhost:3000"
+                                    )
+                                    .SetIsOriginAllowedToAllowWildcardSubdomains()
                                     .AllowAnyMethod()
                                     .AllowAnyHeader());
             });
 
-            var jwtKey = builder.Configuration["Jwt:Key"] ?? "MiClaveSuperSecretaPhysioCare123!";
-            var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "PhysioCare";
-            var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "PhysioCareUsers";
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+            {
+                jwtKey = "PhysioCare_Super_Secret_Key_2026_Minimum_32_Bytes_Long!";
+            }
+
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+            if (string.IsNullOrWhiteSpace(jwtIssuer)) jwtIssuer = "PhysioCare";
+
+            var jwtAudience = builder.Configuration["Jwt:Audience"];
+            if (string.IsNullOrWhiteSpace(jwtAudience)) jwtAudience = "PhysioCareUsers";
 
             builder.Services.AddAuthentication(options =>
             {
@@ -58,7 +71,23 @@ namespace physiocare_backend
 
             var app = builder.Build();
 
-            // CAMBIO: Aplicar la política exacta que acabamos de crear
+            // Auto-migración al arrancar para garantizar que todas las tablas existan en PostgreSQL
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<ApplicationDbContext>();
+                    context.Database.Migrate();
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Ocurrió un error al aplicar las migraciones a PostgreSQL.");
+                }
+            }
+
+            // Aplicar CORS como primer middleware para garantizar headers en todas las respuestas
             app.UseCors("AllowVercel");
 
             if (app.Environment.IsDevelopment())
@@ -67,9 +96,7 @@ namespace physiocare_backend
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
-            
-            // IMPORTANTE: El orden aquí debe mantenerse intacto (Cors -> Authentication -> Authorization)
+            // Orden estricto de seguridad: Cors -> Authentication -> Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 

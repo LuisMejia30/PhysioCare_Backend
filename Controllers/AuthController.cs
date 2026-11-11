@@ -26,58 +26,89 @@ namespace physiocare_backend.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.username == loginDto.username);
-
-            if (usuario == null)
+            try
             {
-                return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
-            }
-
-            bool passwordValido = BCryptNet.Verify(loginDto.password, usuario.passwordHash);
-
-            if (!passwordValido)
-            {
-                return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
-            }
-
-            // 1. Pasamos el objeto usuario completo para extraer id y Rol
-            var token = GenerateJwtToken(usuario);
-
-            // 2. Retornamos la estructura que el frontend espera (token + user object)
-            return Ok(new
-            {
-                success = true,
-                message = "Bienvenido al sistema",
-                token = token,
-                user = new 
+                if (loginDto == null || string.IsNullOrWhiteSpace(loginDto.username) || string.IsNullOrWhiteSpace(loginDto.password))
                 {
-                    id = usuario.id,          // Coincide con public int id { get; set; }
-                    username = usuario.username,
-                    rol = usuario.Rol           // Coincide con public string Rol { get; set; }
+                    return BadRequest(new { message = "Usuario y contraseña requeridos" });
                 }
-            });
+
+                var usuario = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.username == loginDto.username);
+
+                if (usuario == null)
+                {
+                    return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
+                }
+
+                if (!usuario.activo)
+                {
+                    return Unauthorized(new { message = "El usuario está inactivo. Contacte al administrador." });
+                }
+
+                bool passwordValido = BCryptNet.Verify(loginDto.password, usuario.passwordHash);
+
+                if (!passwordValido)
+                {
+                    return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
+                }
+
+                // 1. Generamos el token de forma segura
+                var token = GenerateJwtToken(usuario);
+
+                // 2. Retornamos la estructura que el frontend espera
+                return Ok(new
+                {
+                    success = true,
+                    message = "Bienvenido al sistema",
+                    token = token,
+                    user = new 
+                    {
+                        id = usuario.id,
+                        username = usuario.username,
+                        rol = usuario.Rol
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Devolvemos el error detallado para diagnosticar la causa exacta en el frontend
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
 
-        // 3. Modificamos la firma para recibir el modelo Usuario
         private string GenerateJwtToken(Usuario usuario)
         {
-            // 4. Agregamos el Rol y el id a los Claims (permisos) del JWT
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, usuario.username),
                 new Claim(ClaimTypes.Role, string.IsNullOrEmpty(usuario.Rol) ? "Paciente" : usuario.Rol),
-                new Claim("id", usuario.id.ToString()) // Coincide con public int id { get; set; }
+                new Claim("id", usuario.id.ToString())
             };
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "MiClaveSuperSecretaPhysioCare123!"));
+            var keyString = _configuration["Jwt:Key"];
+            if (string.IsNullOrWhiteSpace(keyString) || keyString.Length < 32)
+            {
+                keyString = "PhysioCare_Super_Secret_Key_2026_Minimum_32_Bytes_Long!";
+            }
 
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var issuer = _configuration["Jwt:Issuer"];
+            if (string.IsNullOrWhiteSpace(issuer)) issuer = "PhysioCare";
+
+            var audience = _configuration["Jwt:Audience"];
+            if (string.IsNullOrWhiteSpace(audience)) audience = "PhysioCareUsers";
+
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"] ?? "PhysioCare",
-                audience: _configuration["Jwt:Audience"] ?? "PhysioCareUsers",
+                issuer: issuer,
+                audience: audience,
                 claims: claims,
                 expires: DateTime.Now.AddHours(8),
                 signingCredentials: creds);

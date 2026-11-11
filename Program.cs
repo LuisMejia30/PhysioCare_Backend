@@ -10,10 +10,13 @@ namespace physiocare_backend
     {
         public static void Main(string[] args)
         {
+            // Habilitar compatibilidad de fechas/timestamps para PostgreSQL (Neon)
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // CAMBIO: Política estricta de CORS apuntando directamente a tu dominio de Vercel
             builder.Services.AddCors(options =>

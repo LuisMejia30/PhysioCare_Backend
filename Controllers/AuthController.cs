@@ -41,22 +41,33 @@ namespace physiocare_backend.Controllers
                 return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
             }
 
-            var token = GenerateJwtToken(usuario.username);
+            // 1. Pasamos el objeto usuario completo para extraer id y Rol
+            var token = GenerateJwtToken(usuario);
 
+            // 2. Retornamos la estructura que el frontend espera (token + user object)
             return Ok(new
             {
                 success = true,
                 message = "Bienvenido al sistema",
-                username = usuario.username,
-                token
+                token = token,
+                user = new 
+                {
+                    id = usuario.id,          // Coincide con public int id { get; set; }
+                    username = usuario.username,
+                    rol = usuario.Rol           // Coincide con public string Rol { get; set; }
+                }
             });
         }
 
-        private string GenerateJwtToken(string username)
+        // 3. Modificamos la firma para recibir el modelo Usuario
+        private string GenerateJwtToken(Usuario usuario)
         {
+            // 4. Agregamos el Rol y el id a los Claims (permisos) del JWT
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name, username)
+                new Claim(ClaimTypes.Name, usuario.username),
+                new Claim(ClaimTypes.Role, string.IsNullOrEmpty(usuario.Rol) ? "Paciente" : usuario.Rol),
+                new Claim("id", usuario.id.ToString()) // Coincide con public int id { get; set; }
             };
 
             var key = new SymmetricSecurityKey(

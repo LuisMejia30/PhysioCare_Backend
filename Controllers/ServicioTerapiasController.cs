@@ -26,14 +26,21 @@ namespace physiocare_backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ServicioTerapia>>> GetTerapias()
         {
-            return await _context.Terapias.ToListAsync();
+            // Se añade .Include() para cargar la categoría en la respuesta
+            // Esto soluciona el error en Reportes donde todas las citas aparecían como "General"
+            return await _context.Terapias
+                .Include(t => t.CategoriaTerapia) 
+                .ToListAsync();
         }
 
         // GET: api/ServicioTerapias/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ServicioTerapia>> GetServicioTerapia(int id)
         {
-            var servicioTerapia = await _context.Terapias.FindAsync(id);
+            // Se reemplaza FindAsync por FirstOrDefaultAsync para permitir el uso de .Include()
+            var servicioTerapia = await _context.Terapias
+                .Include(t => t.CategoriaTerapia)
+                .FirstOrDefaultAsync(t => t.id == id);
 
             if (servicioTerapia == null)
             {

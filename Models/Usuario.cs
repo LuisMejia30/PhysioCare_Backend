@@ -7,7 +7,7 @@ namespace physiocare_backend.Models
         public int id { get; set; }
         public string username { get; set; } = null!;
         public string passwordHash { get; set; } = null!;
-        public string rol { get; set; } = "Paciente"; // Administrador, Recepcionista, Terapeuta, Paciente
+        public string Rol { get; set; } // Administrador, Recepcionista, Terapeuta, Paciente
         public bool activo { get; set; } = true;
 
         // Relaciones opcionales (Para vincular cuentas con entidades físicas)

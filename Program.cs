@@ -15,10 +15,11 @@ namespace physiocare_backend
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // CAMBIO: Política estricta de CORS apuntando directamente a tu dominio de Vercel
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontend",
-                    policy => policy.SetIsOriginAllowed(origin => true)
+                options.AddPolicy("AllowVercel",
+                    policy => policy.WithOrigins("https://physiocare-frontend-chi.vercel.app")
                                     .AllowAnyMethod()
                                     .AllowAnyHeader());
             });
@@ -54,7 +55,8 @@ namespace physiocare_backend
 
             var app = builder.Build();
 
-            app.UseCors("AllowFrontend");
+            // CAMBIO: Aplicar la política exacta que acabamos de crear
+            app.UseCors("AllowVercel");
 
             if (app.Environment.IsDevelopment())
             {
@@ -63,6 +65,8 @@ namespace physiocare_backend
             }
 
             app.UseHttpsRedirection();
+            
+            // IMPORTANTE: El orden aquí debe mantenerse intacto (Cors -> Authentication -> Authorization)
             app.UseAuthentication();
             app.UseAuthorization();
 

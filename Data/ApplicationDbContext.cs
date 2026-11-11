@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using physiocare_backend.Models;
 
@@ -183,7 +183,7 @@ namespace physiocare_backend.Data
                     id = 1,
                     username = "Admin",
                     passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
-                    rol = "Administrador", 
+                    Rol = "Administrador", 
                     activo = true
                 },
                 new Usuario
@@ -191,7 +191,7 @@ namespace physiocare_backend.Data
                     id = 2,
                     username = "recepcion",
                     passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
-                    rol = "Recepcionista",
+                    Rol = "Recepcionista",
                     activo = true
                 },
                 new Usuario
@@ -199,7 +199,7 @@ namespace physiocare_backend.Data
                     id = 3,
                     username = "terapeuta1",
                     passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
-                    rol = "Terapeuta",
+                    Rol = "Terapeuta",
                     TerapeutaId = 1,
                     activo = true
                 },
@@ -208,7 +208,7 @@ namespace physiocare_backend.Data
                     id = 4,
                     username = "paciente1",
                     passwordHash = "$2a$11$cD0U2F8C0x9jDYahMGtr1O521T8ekJN/uVKTpgijHBFjl/ODn1wC6",
-                    rol = "Paciente",
+                    Rol = "Paciente",
                     PacienteId = 1,
                     activo = true
                 }

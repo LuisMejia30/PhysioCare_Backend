@@ -17,8 +17,8 @@ namespace physiocare_backend
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowReactApp",
-                    policy => policy.AllowAnyOrigin()
+                options.AddPolicy("AllowFrontend",
+                    policy => policy.SetIsOriginAllowed(origin => true)
                                     .AllowAnyMethod()
                                     .AllowAnyHeader());
             });
@@ -54,7 +54,7 @@ namespace physiocare_backend
 
             var app = builder.Build();
 
-            app.UseCors("AllowReactApp");
+            app.UseCors("AllowFrontend");
 
             if (app.Environment.IsDevelopment())
             {

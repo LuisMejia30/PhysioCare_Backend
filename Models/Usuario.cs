@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace physiocare_backend.Models
 {
@@ -7,7 +8,10 @@ namespace physiocare_backend.Models
         public int id { get; set; }
         public string username { get; set; } = null!;
         public string passwordHash { get; set; } = null!;
-        public string Rol { get; set; } // Administrador, Recepcionista, Terapeuta, Paciente
+        
+        [Column("rol")]
+        public string Rol { get; set; } = null!; // Administrador, Recepcionista, Terapeuta, Paciente
+        
         public bool activo { get; set; } = true;
 
         // Relaciones opcionales (Para vincular cuentas con entidades físicas)

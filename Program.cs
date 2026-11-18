@@ -109,13 +109,22 @@ namespace physiocare_backend
                     }
                     else
                     {
-                        context.Database.Migrate();
+                        try
+                        {
+                            context.Database.Migrate();
+                        }
+                        catch (Exception migEx)
+                        {
+                            var logger = services.GetRequiredService<ILogger<Program>>();
+                            logger.LogWarning(migEx, "Aviso en Migrate(), ejecutando EnsureCreated() como respaldo...");
+                            context.Database.EnsureCreated();
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "Ocurrió un error al aplicar las migraciones a la base de datos.");
+                    logger.LogError(ex, "Ocurrió un error al inicializar la base de datos.");
                 }
             }
 

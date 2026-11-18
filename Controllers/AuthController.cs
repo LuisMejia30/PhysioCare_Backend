@@ -59,7 +59,7 @@ namespace physiocare_backend.Controllers
                 // 1. Generamos el token de forma segura
                 var token = GenerateJwtToken(usuario);
 
-                // 2. Retornamos la estructura que el frontend espera
+                // 2. Retornamos la estructura que el frontend espera (incluyendo IDs vinculados)
                 return Ok(new
                 {
                     success = true,
@@ -69,7 +69,9 @@ namespace physiocare_backend.Controllers
                     {
                         id = usuario.id,
                         username = usuario.username,
-                        rol = usuario.Rol
+                        rol = usuario.Rol,
+                        pacienteId = usuario.PacienteId,
+                        terapeutaId = usuario.TerapeutaId
                     }
                 });
             }
@@ -83,12 +85,22 @@ namespace physiocare_backend.Controllers
 
         private string GenerateJwtToken(Usuario usuario)
         {
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, usuario.username),
                 new Claim(ClaimTypes.Role, string.IsNullOrEmpty(usuario.Rol) ? "Paciente" : usuario.Rol),
                 new Claim("id", usuario.id.ToString())
             };
+
+            if (usuario.PacienteId.HasValue && usuario.PacienteId.Value > 0)
+            {
+                claims.Add(new Claim("PacienteId", usuario.PacienteId.Value.ToString()));
+            }
+
+            if (usuario.TerapeutaId.HasValue && usuario.TerapeutaId.Value > 0)
+            {
+                claims.Add(new Claim("TerapeutaId", usuario.TerapeutaId.Value.ToString()));
+            }
 
             var keyString = _configuration["Jwt:Key"]
                          ?? _configuration["Jwt__Key"]

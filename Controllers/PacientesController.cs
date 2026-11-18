@@ -69,12 +69,28 @@ namespace physiocare_backend.Controllers
         [HttpGet("cargar-txt")]
         public async Task<IActionResult> CargarArchivoTxt([FromQuery] string nombreArchivo = "informacion.txt")
         {
-            // Busca el archivo dentro de la carpeta 'Archivos' en la raíz de la API
-            string filePath = Path.Combine(_env.ContentRootPath, "Archivos", nombreArchivo);
+            // Solo se permite el NOMBRE de un archivo .txt (sin rutas) dentro de la carpeta 'Archivos'
+            var carpeta = Path.GetFullPath(Path.Combine(_env.ContentRootPath, "Archivos"));
+            var nombreSeguro = Path.GetFileName(nombreArchivo ?? string.Empty);
+
+            if (string.IsNullOrWhiteSpace(nombreSeguro)
+                || nombreSeguro != nombreArchivo
+                || !nombreSeguro.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new { message = "Nombre de archivo no válido. Solo se permiten archivos .txt de la carpeta Archivos." });
+            }
+
+            string filePath = Path.GetFullPath(Path.Combine(carpeta, nombreSeguro));
+
+            // Defensa adicional: el archivo resuelto debe quedar dentro de la carpeta 'Archivos'
+            if (!filePath.StartsWith(carpeta + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            {
+                return BadRequest(new { message = "Ruta de archivo no permitida." });
+            }
 
             if (!System.IO.File.Exists(filePath))
             {
-                return NotFound(new { message = $"El archivo '{nombreArchivo}' no fue encontrado en el servidor." });
+                return NotFound(new { message = "El archivo solicitado no fue encontrado en el servidor." });
             }
 
             string contenido = await System.IO.File.ReadAllTextAsync(filePath);

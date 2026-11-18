@@ -145,7 +145,19 @@ namespace physiocare_backend.Controllers
         {
             // Validar que el servicio realmente existe
             var servicio = await _context.Terapias.FindAsync(cita.ServicioTerapiaId);
-            if (servicio == null) return BadRequest("El servicio seleccionado no existe.");
+            if (servicio == null) return BadRequest(new { message = "El servicio seleccionado no existe." });
+
+            // Validar la duración estimada (15 a 240 minutos), igual que en el formulario
+            if (cita.duracionEstimada < 15 || cita.duracionEstimada > 240)
+            {
+                return BadRequest(new { message = "La duración estimada debe estar entre 15 y 240 minutos." });
+            }
+
+            // Validar que el terapeuta exista
+            if (!await _context.Terapeutas.AnyAsync(t => t.id == cita.TerapeutaId))
+            {
+                return BadRequest(new { message = "El terapeuta seleccionado no existe." });
+            }
 
             // Si el rol es Paciente, forzar que la cita creada pertenezca a su propio PacienteId
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
@@ -160,6 +172,33 @@ namespace physiocare_backend.Controllers
                 {
                     return BadRequest("Su usuario no está vinculado a un perfil de paciente válido.");
                 }
+            }
+
+            // Validar que el paciente exista (después de forzar el PacienteId cuando el rol es Paciente)
+            if (!await _context.Pacientes.AnyAsync(p => p.id == cita.PacienteId))
+            {
+                return BadRequest(new { message = "El paciente seleccionado no existe." });
+            }
+
+            // Validar que el terapeuta no tenga otra cita que se cruce en ese horario (se ignoran las canceladas)
+            var dia = cita.fecha.Date;
+            var diaSiguiente = dia.AddDays(1);
+            var inicioNueva = cita.horaInicio;
+            var finNueva = cita.horaInicio.Add(TimeSpan.FromMinutes(cita.duracionEstimada));
+
+            var citasDelTerapeuta = await _context.Citas
+                .Include(c => c.EstadoCita)
+                .Where(c => c.TerapeutaId == cita.TerapeutaId && c.fecha >= dia && c.fecha < diaSiguiente)
+                .ToListAsync();
+
+            bool hayCruce = citasDelTerapeuta.Any(c =>
+                (c.EstadoCita == null || c.EstadoCita.nombre != "Cancelada") &&
+                inicioNueva < c.horaInicio.Add(TimeSpan.FromMinutes(c.duracionEstimada)) &&
+                finNueva > c.horaInicio);
+
+            if (hayCruce)
+            {
+                return Conflict(new { message = "El terapeuta ya tiene una cita programada en ese horario." });
             }
 
             _context.Citas.Add(cita);

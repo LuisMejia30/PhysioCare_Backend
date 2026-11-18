@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace physiocare_backend.Controllers
 {
@@ -16,11 +17,13 @@ namespace physiocare_backend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(ApplicationDbContext context, IConfiguration configuration)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration, ILogger<AuthController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
 
         [HttpPost("login")]
@@ -72,13 +75,9 @@ namespace physiocare_backend.Controllers
             }
             catch (Exception ex)
             {
-                // Devolvemos el error detallado para diagnosticar la causa exacta en el frontend
-                return StatusCode(500, new
-                {
-                    error = ex.Message,
-                    innerError = ex.InnerException?.Message,
-                    stackTrace = ex.StackTrace
-                });
+                // El detalle del error se guarda en el log del servidor (Render) y NO se envía al cliente
+                _logger.LogError(ex, "Error al iniciar sesión del usuario {Username}", loginDto?.username);
+                return StatusCode(500, new { message = "Ocurrió un error interno al iniciar sesión. Intente de nuevo más tarde." });
             }
         }
 

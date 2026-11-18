@@ -56,6 +56,32 @@ namespace physiocare_backend.Controllers
                     return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
                 }
 
+                // Asegurar que usuarios con roles Paciente y Terapeuta tengan su entidad física vinculada
+                if (usuario.Rol == "Paciente" && (!usuario.PacienteId.HasValue || usuario.PacienteId <= 0))
+                {
+                    var paciente = await _context.Pacientes
+                        .FirstOrDefaultAsync(p => p.correoElectronico == usuario.username || p.correoElectronico.StartsWith(usuario.username))
+                        ?? await _context.Pacientes.FirstOrDefaultAsync();
+
+                    if (paciente != null)
+                    {
+                        usuario.PacienteId = paciente.id;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else if (usuario.Rol == "Terapeuta" && (!usuario.TerapeutaId.HasValue || usuario.TerapeutaId <= 0))
+                {
+                    var terapeuta = await _context.Terapeutas
+                        .FirstOrDefaultAsync(t => t.correoLaboral == usuario.username || t.correoLaboral.StartsWith(usuario.username))
+                        ?? await _context.Terapeutas.FirstOrDefaultAsync();
+
+                    if (terapeuta != null)
+                    {
+                        usuario.TerapeutaId = terapeuta.id;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 // 1. Generamos el token de forma segura
                 var token = GenerateJwtToken(usuario);
 

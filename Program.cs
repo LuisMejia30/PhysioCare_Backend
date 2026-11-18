@@ -23,7 +23,16 @@ namespace physiocare_backend
             var finalConn = ParsePostgresConnectionString(rawConn);
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(finalConn));
+            {
+                if (finalConn.Contains(".db") || finalConn.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.UseSqlite(finalConn);
+                }
+                else
+                {
+                    options.UseNpgsql(finalConn);
+                }
+            });
 
             // Configuración de CORS para Vercel y desarrollo local
             builder.Services.AddCors(options =>
@@ -87,19 +96,26 @@ namespace physiocare_backend
 
             var app = builder.Build();
 
-            // Auto-migración al arrancar para garantizar que todas las tablas existan en PostgreSQL
+            // Auto-inicialización al arrancar (SQLite o PostgreSQL)
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 try
                 {
                     var context = services.GetRequiredService<ApplicationDbContext>();
-                    context.Database.Migrate();
+                    if (context.Database.IsSqlite())
+                    {
+                        context.Database.EnsureCreated();
+                    }
+                    else
+                    {
+                        context.Database.Migrate();
+                    }
                 }
                 catch (Exception ex)
                 {
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "Ocurrió un error al aplicar las migraciones a PostgreSQL.");
+                    logger.LogError(ex, "Ocurrió un error al aplicar las migraciones a la base de datos.");
                 }
             }
 
